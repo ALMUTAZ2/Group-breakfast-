@@ -1,0 +1,410 @@
+  <!DOCTYPE html>
+  <html dir="rtl" lang="ar">
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>دعوة إفطار جماعي</title>
+      <!-- إضافة مكتبات Firebase -->
+      <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+      <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+      <style>
+          body {
+              font-family: 'Tajawal', Arial, sans-serif;
+              background-color: #f5f5f5;
+              margin: 0;
+              padding: 20px;
+              color: #333;
+              direction: rtl;
+          }
+          .container {
+              max-width: 800px;
+              margin: 0 auto;
+              background-color: #fff;
+              padding: 30px;
+              border-radius: 15px;
+              box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+          }
+          h1 {
+              color: #8e44ad;
+              text-align: center;
+              margin-bottom: 30px;
+              font-size: 32px;
+          }
+          .invitation-details {
+              background-color: #f9f3ff;
+              padding: 20px;
+              border-radius: 10px;
+              margin-bottom: 30px;
+              text-align: center;
+              border: 2px dashed #8e44ad;
+          }
+          .form-group {
+              margin-bottom: 20px;
+          }
+          label {
+              display: block;
+              margin-bottom: 8px;
+              font-weight: bold;
+              color: #555;
+          }
+          input[type="text"] {
+              width: 100%;
+              padding: 12px;
+              border: 1px solid #ddd;
+              border-radius: 5px;
+              font-size: 16px;
+              font-family: 'Tajawal', Arial, sans-serif;
+          }
+          .radio-group {
+              display: flex;
+              gap: 20px;
+              margin-top: 10px;
+          }
+          .radio-option {
+              display: flex;
+              align-items: center;
+              cursor: pointer;
+          }
+          .radio-option input {
+              margin-left: 8px;
+              cursor: pointer;
+              width: 18px;
+              height: 18px;
+          }
+          button {
+              background-color: #8e44ad;
+              color: white;
+              border: none;
+              padding: 12px 24px;
+              font-size: 18px;
+              border-radius: 5px;
+              cursor: pointer;
+              width: 100%;
+              font-family: 'Tajawal', Arial, sans-serif;
+              transition: background-color 0.3s;
+          }
+          button:hover {
+              background-color: #7d3c98;
+          }
+          table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 30px;
+          }
+          th, td {
+              border: 1px solid #ddd;
+              padding: 12px;
+              text-align: right;
+          }
+          th {
+              background-color: #8e44ad;
+              color: white;
+          }
+          tr:nth-child(even) {
+              background-color: #f9f3ff;
+          }
+          .attendance-status {
+              font-weight: bold;
+          }
+          .attending {
+              color: #27ae60;
+          }
+          .not-attending {
+              color: #e74c3c;
+          }
+          .header-image {
+              text-align: center;
+              margin-bottom: 20px;
+          }
+          .header-image img {
+              max-width: 100%;
+              border-radius: 10px;
+          }
+          .empty-table-message {
+              text-align: center;
+              padding: 20px;
+              color: #777;
+              font-style: italic;
+          }
+          .location-link {
+              color: #8e44ad;
+              text-decoration: none;
+              font-weight: bold;
+              transition: color 0.3s;
+          }
+          .location-link:hover {
+              color: #6c3483;
+              text-decoration: underline;
+          }
+          .date-highlight {
+              background-color: #f1c40f;
+              color: #333;
+              padding: 3px 8px;
+              border-radius: 5px;
+              font-weight: bold;
+              display: inline-block;
+              margin: 5px 0;
+          }
+          #loadingMessage {
+              text-align: center;
+              color: #8e44ad;
+              margin: 20px 0;
+              font-style: italic;
+          }
+          .submit-success {
+              background-color: #d4edda;
+              color: #155724;
+              padding: 10px;
+              border-radius: 5px;
+              margin-top: 15px;
+              display: none;
+              text-align: center;
+          }
+          /* تنسيق قسم الإحصائيات */
+          .stats-container {
+              display: flex;
+              justify-content: space-around;
+              margin: 30px 0;
+              text-align: center;
+          }
+          .stat-box {
+              flex: 1;
+              padding: 15px;
+              border-radius: 10px;
+              margin: 0 10px;
+              box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+          }
+          .attending-box {
+              background-color: rgba(39, 174, 96, 0.15);
+              border: 2px solid #27ae60;
+          }
+          .not-attending-box {
+              background-color: rgba(231, 76, 60, 0.15);
+              border: 2px solid #e74c3c;
+          }
+          .total-box {
+              background-color: rgba(142, 68, 173, 0.15);
+              border: 2px solid #8e44ad;
+          }
+          .stat-number {
+              font-size: 36px;
+              font-weight: bold;
+              margin: 10px 0;
+          }
+          .attending-number {
+              color: #27ae60;
+          }
+          .not-attending-number {
+              color: #e74c3c;
+          }
+          .total-number {
+              color: #8e44ad;
+          }
+          .stat-label {
+              font-size: 16px;
+              color: #555;
+          }
+          .stats-title {
+              text-align: center;
+              color: #8e44ad;
+              margin-bottom: 20px;
+          }
+      </style>
+  </head>
+  <body>
+      <div class="container">
+          <div class="header-image">
+              <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80" alt="صورة مطعم">
+          </div>
+          
+          <h1>دعوة إفطار جماعي</h1>
+          
+          <div class="invitation-details">
+              <h2>تفاصيل الدعوة</h2>
+              <p><strong>التاريخ:</strong> <span class="date-highlight">22 رمضان 1446 هـ</span></p>
+              <p><strong>الوقت:</strong> الساعة 5:00 عصراً</p>
+              <p><strong>المكان:</strong> مطعم كل </p>
+              <p><strong>موقع الإفطار:</strong> <a href="https://maps.app.goo.gl/nK8r63bWTDsbeAGT6" target="_blank" class="location-link">اضغط هنا للوصول إلى الموقع</a></p>
+              <p><strong>المناسبة:</strong> لقاء إفطار رمضاني</p>
+          </div>
+          
+          <!-- قسم الإحصائيات -->
+          <h2 class="stats-title">إحصائيات الحضور</h2>
+          <div class="stats-container">
+              <div class="stat-box attending-box">
+                  <div id="attendingCount" class="stat-number attending-number">0</div>
+                  <div class="stat-label">الحاضرون</div>
+              </div>
+              <div class="stat-box not-attending-box">
+                  <div id="notAttendingCount" class="stat-number not-attending-number">0</div>
+                  <div class="stat-label">المعتذرون</div>
+              </div>
+              <div class="stat-box total-box">
+                  <div id="totalCount" class="stat-number total-number">0</div>
+                  <div class="stat-label">المجموع</div>
+              </div>
+          </div>
+          
+          <form id="attendanceForm">
+              <div class="form-group">
+                  <label for="name">الاسم:</label>
+                  <input type="text" id="name" name="name" placeholder="أدخل اسمك هنا" required>
+              </div>
+              
+              <div class="form-group">
+                  <label>هل ستحضر؟</label>
+                  <div class="radio-group">
+                      <label class="radio-option">
+                          <input type="radio" name="attendance" value="yes" required> موافق
+                      </label>
+                      <label class="radio-option">
+                          <input type="radio" name="attendance" value="no"> غير موافق
+                      </label>
+                  </div>
+              </div>
+              
+              <button type="submit">تأكيد</button>
+              <div id="submitSuccess" class="submit-success">تم تسجيل حضورك بنجاح!</div>
+          </form>
+          
+          <h2>قائمة الحضور</h2>
+          <div id="loadingMessage">جاري تحميل قائمة الحضور...</div>
+          <table id="attendanceTable">
+              <thead>
+                  <tr>
+                      <th>الاسم</th>
+                      <th>الحالة</th>
+                  </tr>
+              </thead>
+              <tbody id="attendanceTableBody">
+                  <!-- سيتم ملء البيانات هنا من Firebase -->
+              </tbody>
+          </table>
+      </div>
+
+      <script>
+          // تهيئة Firebase
+          const firebaseConfig = {
+              apiKey: "AIzaSyC5RYK1lGaJaMQJmOH85cqNgv6m7rbLS_A",
+              authDomain: "ramadanmotaz-5570f.firebaseapp.com",
+              projectId: "ramadanmotaz-5570f",
+              storageBucket: "ramadanmotaz-5570f.firebasestorage.app",
+              messagingSenderId: "595667154066",
+              appId: "1:595667154066:web:80ba616566ec55a5efe24b",
+              measurementId: "G-WLVRQVRGHT"
+          };
+          
+          // تهيئة Firebase
+          firebase.initializeApp(firebaseConfig);
+          const db = firebase.firestore();
+          const attendanceCollection = db.collection('attendance');
+          
+          // عرض رسالة التحميل
+          document.getElementById('loadingMessage').style.display = 'block';
+          
+          // تحديث الإحصائيات
+          function updateStats(attendees) {
+              let attendingCount = 0;
+              let notAttendingCount = 0;
+              
+              attendees.forEach(doc => {
+                  const data = doc.data();
+                  if (data.attendance === 'yes') {
+                      attendingCount++;
+                  } else {
+                      notAttendingCount++;
+                  }
+              });
+              
+              const totalCount = attendingCount + notAttendingCount;
+              
+              document.getElementById('attendingCount').textContent = attendingCount;
+              document.getElementById('notAttendingCount').textContent = notAttendingCount;
+              document.getElementById('totalCount').textContent = totalCount;
+          }
+          
+          // استمع للتغييرات في قاعدة البيانات وقم بتحديث الجدول
+          function loadAttendees() {
+              const tableBody = document.getElementById('attendanceTableBody');
+              
+              attendanceCollection.orderBy('timestamp', 'desc').onSnapshot((snapshot) => {
+                  // إخفاء رسالة التحميل
+                  document.getElementById('loadingMessage').style.display = 'none';
+                  
+                  // تحديث الإحصائيات
+                  updateStats(snapshot.docs);
+                  
+                  // تفريغ الجدول
+                  tableBody.innerHTML = '';
+                  
+                  if (snapshot.empty) {
+                      // إذا لم تكن هناك بيانات، أظهر رسالة
+                      const emptyRow = document.createElement('tr');
+                      const emptyCell = document.createElement('td');
+                      emptyCell.colSpan = 2;
+                      emptyCell.className = 'empty-table-message';
+                      emptyCell.textContent = 'لا يوجد مسجلين حتى الآن';
+                      emptyRow.appendChild(emptyCell);
+                      tableBody.appendChild(emptyRow);
+                  } else {
+                      // إضافة البيانات إلى الجدول
+                      snapshot.forEach((doc) => {
+                          const data = doc.data();
+                          const row = document.createElement('tr');
+                          
+                          const nameCell = document.createElement('td');
+                          nameCell.textContent = data.name;
+                          
+                          const statusCell = document.createElement('td');
+                          statusCell.textContent = data.attendance === 'yes' ? 'سيحضر' : 'لن يحضر';
+                          statusCell.className = 'attendance-status ' + (data.attendance === 'yes' ? 'attending' : 'not-attending');
+                          
+                          row.appendChild(nameCell);
+                          row.appendChild(statusCell);
+                          tableBody.appendChild(row);
+                      });
+                  }
+              }, (error) => {
+                  console.error("خطأ في استرجاع البيانات:", error);
+                  document.getElementById('loadingMessage').textContent = 'حدث خطأ في تحميل البيانات';
+              });
+          }
+          
+          // تحميل البيانات عند تحميل الصفحة
+          document.addEventListener('DOMContentLoaded', loadAttendees);
+          
+          // معالجة نموذج التسجيل
+          document.getElementById('attendanceForm').addEventListener('submit', function(e) {
+              e.preventDefault();
+              
+              const name = document.getElementById('name').value;
+              const attendance = document.querySelector('input[name="attendance"]:checked').value;
+              
+              // إضافة البيانات إلى Firebase
+              attendanceCollection.add({
+                  name: name,
+                  attendance: attendance,
+                  timestamp: firebase.firestore.FieldValue.serverTimestamp()
+              })
+              .then(() => {
+                  // إظهار رسالة النجاح
+                  const successMsg = document.getElementById('submitSuccess');
+                  successMsg.style.display = 'block';
+                  
+                  // إخفاء رسالة النجاح بعد 3 ثواني
+                  setTimeout(() => {
+                      successMsg.style.display = 'none';
+                  }, 3000);
+                  
+                  // إعادة تعيين النموذج
+                  document.getElementById('name').value = '';
+                  document.querySelector('input[name="attendance"]:checked').checked = false;
+              })
+              .catch((error) => {
+                  console.error("خطأ في حفظ البيانات:", error);
+                  alert("حدث خطأ في تسجيل بياناتك. الرجاء المحاولة مرة أخرى.");
+              });
+          });
+      </script>
+  </body>
+  </html>
